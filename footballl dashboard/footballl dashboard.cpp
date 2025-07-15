@@ -4,7 +4,6 @@
 using namespace std;
 int main()
 {
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Football Dashboard");
 
     Font titleFont = LoadFontEx("E:/New folder/holborn/Holborn.otf", 20, NULL, 0);
