@@ -1,0 +1,199 @@
+#include "DashboardApi.h"
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+#include <iostream>
+
+using json = nlohmann::json;
+
+DashboardData DashboardApi::fetchUpcomingMatches(const std::string& competitionCode) {
+    std::string url = "https://api.football-data.org/v4/competitions/" + competitionCode + "/matches?status=SCHEDULED&limit=5";
+
+    cpr::Response r = cpr::Get(
+        cpr::Url{ url },
+        cpr::Header{ {"X-Auth-Token", apiKey} }
+    );
+
+    json j;
+    try {
+        j = json::parse(r.text);
+    }
+    catch (json::parse_error& e) {
+        std::cerr << "JSON parse error: " << e.what() << "\n";
+        return DashboardData();
+    }
+
+    if (!j.contains("matches") || !j["matches"].is_array()) {
+        std::cerr << "Unexpected JSON structure.\n";
+        return DashboardData();
+    }
+
+    DashboardData data;
+    int count = 0;
+    for (const auto& match : j["matches"]) {
+        if (count >= 5) break;
+
+        MatchInfo m;
+
+        if (match.contains("homeTeam") && match["homeTeam"].contains("name")) {
+            m.homeTeam = match["homeTeam"]["name"].get<std::string>();
+        }
+        else {
+            m.homeTeam = "Unknown";
+        }
+
+        if (match.contains("awayTeam") && match["awayTeam"].contains("name")) {
+            m.awayTeam = match["awayTeam"]["name"].get<std::string>();
+        }
+        else {
+            m.awayTeam = "Unknown";
+        }
+
+        m.status = match.value("status", "SCHEDULED");
+        m.homeScore = 0;
+        m.awayScore = 0;
+
+        if (match.contains("utcDate")) {
+            m.matchDate = match["utcDate"].get<std::string>();
+        }
+
+        data.matches.push_back(m);
+        ++count;
+    }
+
+    return data;
+}
+
+DashboardData DashboardApi::fetchLiveMatches() {
+    std::string url = "https://api.football-data.org/v4/matches?status=LIVE";
+
+    cpr::Response r = cpr::Get(
+        cpr::Url{ url },
+        cpr::Header{ {"X-Auth-Token", apiKey} }
+    );
+
+    json j;
+    try {
+        j = json::parse(r.text);
+    }
+    catch (json::parse_error& e) {
+        std::cerr << "JSON parse error: " << e.what() << "\n";
+        return DashboardData();
+    }
+
+    if (!j.contains("matches") || !j["matches"].is_array()) {
+        return DashboardData();
+    }
+
+    DashboardData data;
+    int count = 0;
+    for (const auto& match : j["matches"]) {
+        if (count >= 5) break;
+
+        MatchInfo m;
+
+        if (match.contains("homeTeam") && match["homeTeam"].contains("name")) {
+            m.homeTeam = match["homeTeam"]["name"].get<std::string>();
+        }
+        else {
+            m.homeTeam = "Unknown";
+        }
+
+        if (match.contains("awayTeam") && match["awayTeam"].contains("name")) {
+            m.awayTeam = match["awayTeam"]["name"].get<std::string>();
+        }
+        else {
+            m.awayTeam = "Unknown";
+        }
+
+        m.status = match.value("status", "LIVE");
+        m.homeScore = 0;
+        m.awayScore = 0;
+
+        if (match.contains("score") && match["score"].contains("fullTime")) {
+            const auto& fullTime = match["score"]["fullTime"];
+
+            if (fullTime.contains("home") && !fullTime["home"].is_null()) {
+                m.homeScore = fullTime["home"].get<int>();
+            }
+
+            if (fullTime.contains("away") && !fullTime["away"].is_null()) {
+                m.awayScore = fullTime["away"].get<int>();
+            }
+        }
+
+        data.matches.push_back(m);
+        ++count;
+    }
+
+    return data;
+}
+
+DashboardData DashboardApi::fetchRecentResults() {
+    std::string url = "https://api.football-data.org/v4/matches";
+
+    cpr::Response r = cpr::Get(
+        cpr::Url{ url },
+        cpr::Header{ {"X-Auth-Token", apiKey} }
+    );
+
+    json j;
+    try {
+        j = json::parse(r.text);
+    }
+    catch (json::parse_error& e) {
+        std::cerr << "JSON parse error: " << e.what() << "\n";
+        return DashboardData();
+    }
+
+    if (!j.contains("matches") || !j["matches"].is_array()) {
+        return DashboardData();
+    }
+
+    DashboardData data;
+    int count = 0;
+    for (const auto& match : j["matches"]) {
+        if (count >= 5) break;
+
+        MatchInfo m;
+
+        if (match.contains("homeTeam") && match["homeTeam"].contains("name")) {
+            m.homeTeam = match["homeTeam"]["name"].get<std::string>();
+        }
+        else {
+            m.homeTeam = "Unknown";
+        }
+
+        if (match.contains("awayTeam") && match["awayTeam"].contains("name")) {
+            m.awayTeam = match["awayTeam"]["name"].get<std::string>();
+        }
+        else {
+            m.awayTeam = "Unknown";
+        }
+
+        m.status = match.value("status", "FINISHED");
+        m.homeScore = 0;
+        m.awayScore = 0;
+
+        if (match.contains("score") && match["score"].contains("fullTime")) {
+            const auto& fullTime = match["score"]["fullTime"];
+
+            if (fullTime.contains("home") && !fullTime["home"].is_null()) {
+                m.homeScore = fullTime["home"].get<int>();
+            }
+
+            if (fullTime.contains("away") && !fullTime["away"].is_null()) {
+                m.awayScore = fullTime["away"].get<int>();
+            }
+        }
+
+        data.matches.push_back(m);
+        ++count;
+    }
+
+    return data;
+}
+
+// Keep the original method for backward compatibility
+DashboardData DashboardApi::fetchMatches(const std::string& competitionCode) {
+    return fetchUpcomingMatches(competitionCode);
+}

@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="footballl dashboard.cpp">
+    <ClCompile Include="DashboardApi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="apiconnect.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="apiconnect.h">
+    <ClInclude Include="DashboardApi.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
