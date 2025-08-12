@@ -20,7 +20,7 @@ class InteractiveDashboard {
 private:
     DashboardApi api;
     std::map<std::string, std::string> leagues = {
-        {"1", "BSA"},  // Campeonato Brasileiro Série A
+        {"1", "BSA"},  // Campeonato Brasileiro SÃ©rie A
         {"2", "PL"},   // Premier League
         {"3", "ELC"},  // Championship
         {"4", "CL"},   // UEFA Champions League
@@ -31,7 +31,7 @@ private:
     };
 
     std::map<std::string, std::string> leagueNames = {
-        {"BSA", "Campeonato Brasileiro Série A"},
+        {"BSA", "Campeonato Brasileiro SÃ©rie A"},
         {"PL", "Premier League"},
         {"ELC", "Championship"},
         {"CL", "UEFA Champions League"},
@@ -267,7 +267,7 @@ public:
 };
 
 int main() {
-    std::string apiKey = "fe728bc5476c4cae90140b7399cd3005";
+    std::string apiKey = "*********************";
 
     try {
         InteractiveDashboard dashboard(apiKey);
