@@ -361,7 +361,7 @@ public:
 };
 
 int main() {
-    std::string apiKey = "fe728bc5476c4cae90140b7399cd3005";
+    std::string apiKey = "API_KEY";
 
     try {
         InteractiveDashboard dashboard(apiKey);
