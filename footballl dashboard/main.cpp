@@ -102,6 +102,59 @@ public:
         std::cout << "+" << std::string(78, '=') << "+\n";
     }
 
+    void printStandingsTable(const std::vector<StandingInfo>& standings, const std::string& tableTitle) {
+        std::cout << "\n+" << std::string(90, '=') << "+\n";
+        std::cout << "|" << std::setw(45 + tableTitle.length() / 2) << tableTitle
+            << std::setw(45 - tableTitle.length() / 2) << "|\n";
+        std::cout << "+" << std::string(90, '=') << "+\n";
+
+        if (standings.empty()) {
+            std::cout << "|" << std::setw(45) << "No standings available"
+                << std::setw(45) << "|\n";
+        }
+        else {
+            std::cout << "| " << std::left << std::setw(3) << "Pos"
+                << "| " << std::setw(25) << "Team"
+                << "| " << std::setw(3) << "Pld"
+                << "| " << std::setw(3) << "W"
+                << "| " << std::setw(3) << "D"
+                << "| " << std::setw(3) << "L"
+                << "| " << std::setw(5) << "GF"
+                << "| " << std::setw(5) << "GA"
+                << "| " << std::setw(4) << "GD"
+                << "| " << std::setw(4) << "Pts" << " |\n";
+            std::cout << "+" << std::string(4, '-') << "+" << std::string(26, '-')
+                << "+" << std::string(4, '-') << "+" << std::string(4, '-')
+                << "+" << std::string(4, '-') << "+" << std::string(4, '-')
+                << "+" << std::string(6, '-') << "+" << std::string(6, '-')
+                << "+" << std::string(5, '-') << "+" << std::string(5, '-') << "+\n";
+
+            int displayCount = 0;
+            for (const auto& standing : standings) {
+                if (displayCount >= 20) break;
+
+                std::string goalDiff = std::to_string(standing.goalsFor - standing.goalsAgainst);
+                if (standing.goalsFor - standing.goalsAgainst > 0) {
+                    goalDiff = "+" + goalDiff;
+                }
+
+                std::cout << "| " << std::left << std::setw(3) << standing.position
+                    << "| " << std::setw(25) << standing.teamName.substr(0, 24)
+                    << "| " << std::setw(3) << standing.playedGames
+                    << "| " << std::setw(3) << standing.won
+                    << "| " << std::setw(3) << standing.draw
+                    << "| " << std::setw(3) << standing.lost
+                    << "| " << std::setw(5) << standing.goalsFor
+                    << "| " << std::setw(5) << standing.goalsAgainst
+                    << "| " << std::setw(4) << goalDiff
+                    << "| " << std::setw(4) << standing.points << " |\n";
+                ++displayCount;
+            }
+        }
+
+        std::cout << "+" << std::string(90, '=') << "+\n";
+    }
+
     void showMainMenu() {
         printHeader("*** FOOTBALL DASHBOARD ***");
 
@@ -111,13 +164,14 @@ public:
         std::cout << "|  1. [LIVE] Live Matches                                                   |\n";
         std::cout << "|  2. [UPCOMING] Upcoming Matches (Choose League)                          |\n";
         std::cout << "|  3. [RESULTS] Recent Match Results                                        |\n";
-        std::cout << "|  4. [EXIT] Exit                                                           |\n";
+        std::cout << "|  4. [STANDINGS] League Standings (Choose League)                         |\n";
+        std::cout << "|  5. [EXIT] Exit                                                           |\n";
         std::cout << "+----------------------------------------------------------------------------+\n";
-        std::cout << "\n>> Enter your choice (1-4): ";
+        std::cout << "\n>> Enter your choice (1-5): ";
     }
 
     void showLeagueMenu() {
-        printHeader("*** SELECT LEAGUE FOR UPCOMING MATCHES ***");
+        printHeader("*** SELECT LEAGUE ***");
 
         std::cout << "+----------------------------------------------------------------------------+\n";
         std::cout << "|                            AVAILABLE LEAGUES                               |\n";
@@ -223,12 +277,35 @@ public:
         waitForUser();
     }
 
+    void showStandings(const std::string& leagueCode) {
+        clearScreen();
+        std::string leagueName = leagueNames[leagueCode];
+        printHeader("*** LEAGUE STANDINGS - " + leagueName + " ***");
+
+        std::cout << ">> Fetching standings for " << leagueName << "...\n";
+
+        try {
+            auto data = api.fetchStandings(leagueCode);
+            printStandingsTable(data.standings, "LEAGUE TABLE");
+
+            if (data.standings.empty()) {
+                printBox("INFO: No standings available for this league.");
+            }
+
+        }
+        catch (const std::exception& e) {
+            printBox("ERROR: Error fetching standings: " + std::string(e.what()));
+        }
+
+        waitForUser();
+    }
+
     void run() {
         while (true) {
             clearScreen();
             showMainMenu();
 
-            int choice = getValidInput(1, 4);
+            int choice = getValidInput(1, 5);
 
             switch (choice) {
             case 1:
@@ -256,7 +333,24 @@ public:
                 showRecentResults();
                 break;
 
-            case 4:
+            case 4: {
+                while (true) {
+                    clearScreen();
+                    showLeagueMenu();
+
+                    int leagueChoice = getValidInput(1, 9);
+
+                    if (leagueChoice == 9) {
+                        break; // Back to main menu
+                    }
+
+                    std::string leagueCode = leagues[std::to_string(leagueChoice)];
+                    showStandings(leagueCode);
+                }
+                break;
+            }
+
+            case 5:
                 clearScreen();
                 printHeader("*** GOODBYE! ***");
                 std::cout << "Thank you for using Football Dashboard!\n\n";
@@ -267,7 +361,7 @@ public:
 };
 
 int main() {
-    std::string apiKey = "*********************";
+    std::string apiKey = "fe728bc5476c4cae90140b7399cd3005";
 
     try {
         InteractiveDashboard dashboard(apiKey);
