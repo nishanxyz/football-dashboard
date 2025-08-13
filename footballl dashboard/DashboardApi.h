@@ -1,5 +1,5 @@
-#ifndef DASHBOARD_API_H
-#define DASHBOARD_API_H
+#ifndef DASHBOARDAPI_H
+#define DASHBOARDAPI_H
 
 #include <string>
 #include <vector>
@@ -7,14 +7,27 @@
 struct MatchInfo {
     std::string homeTeam;
     std::string awayTeam;
-    int homeScore = 0;
-    int awayScore = 0;
+    int homeScore;
+    int awayScore;
     std::string status;
     std::string matchDate;
 };
 
+struct StandingInfo {
+    int position;
+    std::string teamName;
+    int playedGames;
+    int won;
+    int draw;
+    int lost;
+    int goalsFor;
+    int goalsAgainst;
+    int points;
+};
+
 struct DashboardData {
     std::vector<MatchInfo> matches;
+    std::vector<StandingInfo> standings;
 };
 
 class DashboardApi {
@@ -22,18 +35,21 @@ private:
     std::string apiKey;
 
 public:
-    explicit DashboardApi(const std::string& key) : apiKey(key) {}
+    DashboardApi(const std::string& key) : apiKey(key) {}
 
-    // Get upcoming matches for a specific league
+    // Fetch upcoming matches for a specific competition
     DashboardData fetchUpcomingMatches(const std::string& competitionCode);
 
-    // Get live matches
+    // Fetch live matches across all competitions
     DashboardData fetchLiveMatches();
 
-    // Get recent match results
+    // Fetch recent results (all competitions)
     DashboardData fetchRecentResults();
 
-    // Original method (can be kept for backward compatibility)
+    // Fetch standings for a specific competition
+    DashboardData fetchStandings(const std::string& competitionCode);
+
+    // Legacy method for backward compatibility
     DashboardData fetchMatches(const std::string& competitionCode);
 };
 
