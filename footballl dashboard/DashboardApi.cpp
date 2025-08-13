@@ -193,6 +193,65 @@ DashboardData DashboardApi::fetchRecentResults() {
     return data;
 }
 
+
+
+DashboardData DashboardApi::fetchStandings(const std::string& competitionCode) {
+    std::string url = "https://api.football-data.org/v4/competitions/" + competitionCode + "/standings";
+
+    cpr::Response r = cpr::Get(
+        cpr::Url{ url },
+        cpr::Header{ {"X-Auth-Token", apiKey} }
+    );
+
+    json j;
+    try {
+        j = json::parse(r.text);
+    }
+    catch (json::parse_error& e) {
+        std::cerr << "JSON parse error: " << e.what() << "\n";
+        return DashboardData();
+    }
+
+    if (!j.contains("standings") || !j["standings"].is_array() || j["standings"].empty()) {
+        std::cerr << "No standings data found.\n";
+        return DashboardData();
+    }
+
+    DashboardData data;
+
+    // Get the first standings table (usually the overall table)
+    const auto& standingsTable = j["standings"][0];
+
+    if (!standingsTable.contains("table") || !standingsTable["table"].is_array()) {
+        std::cerr << "Invalid standings table structure.\n";
+        return DashboardData();
+    }
+
+    for (const auto& standing : standingsTable["table"]) {
+        StandingInfo s;
+
+        s.position = standing.value("position", 0);
+        s.points = standing.value("points", 0);
+        s.playedGames = standing.value("playedGames", 0);
+        s.won = standing.value("won", 0);
+        s.draw = standing.value("draw", 0);
+        s.lost = standing.value("lost", 0);
+        s.goalsFor = standing.value("goalsFor", 0);
+        s.goalsAgainst = standing.value("goalsAgainst", 0);
+
+        if (standing.contains("team") && standing["team"].contains("name")) {
+            s.teamName = standing["team"]["name"].get<std::string>();
+        }
+        else {
+            s.teamName = "Unknown Team";
+        }
+
+        data.standings.push_back(s);
+    }
+
+    return data;
+}
+
 // Keep the original method for backward compatibility
 DashboardData DashboardApi::fetchMatches(const std::string& competitionCode) {
     return fetchUpcomingMatches(competitionCode);
